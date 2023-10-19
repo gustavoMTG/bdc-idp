@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <title>IDP</title>
+  {{ bootstrap.load_css() }}
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+</head>
+<body>
+
+  <div class="container-fluid">
+    <div class="row">
+      <nav class="navbar navbar-expand-lg bg-body-tertiary">
+        <div class="container-fluid">
+          <a class="navbar-brand" href={{ url_for('home') }}>IDP</a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+              <li class="nav-item">
+                <a class="nav-link active" aria-current="page" href={{ url_for('events') }}>Eventos</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link active" aria-current="page" href={{ url_for('logs') }}>Logs</a>
+              </li>
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  Alarmas
+                </a>
+                <ul class="dropdown-menu">
+                  <li><a class="dropdown-item" href={{ url_for('alarms', types_='161') }}>Falla Protección</a></li>
+                  <li><a class="dropdown-item" href={{ url_for('alarms', types_='7801') }}>Falla Canal Com. PROT</a></li>
+                  <li><a class="dropdown-item" href={{ url_for('alarms', types_='7785') }}>Diferencial Bloqueada</a></li>
+                  <li><a class="dropdown-item" href={{ url_for('alarms', types_='8165') }}>Error de Datos</a></li>
+                  <li><a class="dropdown-item" href={{ url_for('alarms', types_='8225') }}>Falla Equipo TPR</a></li>
+                  <li><a class="dropdown-item" href={{ url_for('alarms', types_='7665') }}>TQ Trafo. tensión PROT</a></li>
+                  <li><a class="dropdown-item" href={{ url_for('alarms', types_='321') }}>Falla CC PROT</a></li>
+                  <li><a class="dropdown-item" href={{ url_for('alarms', types_='8009') }}>Falla Sincro. GPS</a></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><a class="dropdown-item" href={{ url_for('alarms', types_='4501_4502_4503_4504_4505_4506_4507_4508_4509_4510_4511_4512_4513_4514_4516_4517_4518') }}>T3 DUR</a></li>
+                </ul>
+              </li>
+            </ul>
+            <form class="d-flex" role="search">
+              <input class="form-control me-2" type="search" placeholder="Buscar" aria-label="Search">
+              <button class="btn btn-outline-success" type="submit">Ir</button>
+            </form>
+          </div>
+        </div>
+      </nav>
+    </div>
+  </div>
+
+
+{% block content %}{% endblock %}
+
+
+{{ bootstrap.load_js() }}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script src="static/scripts/index.js"></script>
+</body>
+</html>

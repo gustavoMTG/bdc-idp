@@ -1,0 +1,31 @@
+{% from 'bootstrap5/form.html' import render_form, render_field %}
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="container">
+<!--  {{ render_form(form) }}-->
+  <div class="row">
+    <div class="col-6">
+      {{ render_field(form.brief) }}
+      <div class="row">
+        <div class="col-6">
+          {{ render_field(form.start_time) }}
+        </div>
+        <div class="col-6">
+          {{ render_field(form.end_time) }}
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-12">
+          {{ render_field( form.check_boxes ) }}
+        </div>
+      </div>
+    </div>
+    <div class="col-6">
+      {{ render_field(form.text_area) }}
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}

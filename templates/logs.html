@@ -1,0 +1,74 @@
+{% from 'bootstrap/form.html' import render_form %}
+{% extends 'base.html' %}
+{% block content%}
+
+<div class="container-flex px-5 py-5">
+  <div class="row">
+    <div class="col-lg-2">Hello</div>
+    <div class="col-lg-8">
+
+      <!-- Events are rendered in this div -->
+      <!-- This is a nested row within the central column -->
+      <div class="row">
+        <div class="col-lg-12">
+          <h2>Eventos</h2><hr>
+        </div>
+      </div>
+      <div class="row">
+        {% for event in events: %}
+        <div class="col-4">
+            <div class="card" style="width: 24rem;">
+              <div class="card-body">
+                <h5 class="card-title">{{ event[11] }}</h5>
+                <h6 class="card-subtitle mb-2 text-body-secondary">{{ event[12] + " " + event[1]|string + " " + event[2]|string }}</h6>
+                <p class="card-text">{{ event[10] }}</p>
+                <a href={{ url_for('participant_form', id=event[0]) }} class="card-link">Vincular</a>
+                <p></p>
+
+                <!-- here goes an accordion to display linked participations -->
+                <div class="accordion" id="accordionPanelsStayOpenExample{{ event.idevento }}">
+                  {% for participation in participations: %}
+                  {% if participation.idevento == event.idevento %}
+                  <div class="accordion-item">
+                    <h2 class="accordion-header">
+                      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#panelsStayOpen-collapse{{ event.idevento }}{{ participation.idlog }}" aria-expanded="false" aria-controls="panelsStayOpen-collapse{{ event.idevento }}{{ participation.idlog }}">
+                        {{ participation.nombre }}
+                      </button>
+                    </h2>
+                    <div id="panelsStayOpen-collapse{{ event.idevento }}{{ participation.idlog }}" class="accordion-collapse collapse">
+                      <div class="accordion-body">
+                        {{ participation.obs }}
+                      </div>
+                    </div>
+                  </div>
+                  {% endif %}
+                  {% endfor %}
+                </div>
+
+              </div>
+            </div>
+        </div>
+        {% endfor %}
+      </div>
+
+
+    </div>
+    <div class="col-lg-2">World</div>
+  </div>
+</div>
+
+
+
+<!--<div class="container pt-5">
+	<div class="row">
+		<form>
+			<label for="">Título</label>
+			<input type="text", name="title", size="50"><br>
+			<label for="">Descripción</label>
+			<textarea name="description" id="" cols="50" rows="10"></textarea>
+		</form>
+	</div>
+</div>-->
+
+
+{% endblock %}

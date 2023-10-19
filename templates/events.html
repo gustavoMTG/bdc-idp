@@ -1,0 +1,42 @@
+{% from 'bootstrap/form.html' import render_form %}
+{% extends 'base.html' %}
+{% block content%}
+
+
+  <div class="container-fluid mt-5">
+    <div class="row">
+      <div class="col-lg-4 px-5">
+        <h2>Aclaraciones</h2>
+        <hr>
+        <ul>
+          <li>Se deben ingresar las siglas de las estaciones, las mayúsculas no son necesarias, por ej. COL.</li>
+          <li>Pueden ingresarse varias estaciones separadas por espacios: LIB COL BOB YOU.</li>
+          <li>Las fechas se toman con hora 00:00</li>
+        </ul>
+      </div>
+      <div class="col-lg-4 px-5">
+        {{ render_form(form=form, action=url_for('events')) }}
+      </div>
+      <div class="col-lg-3 px-5">
+        <h2>Leyenda de colores para eventos descargados</h2>
+        <hr>
+        <p style="color: red">Pasaje de posición de interruptor a DSD</p>
+        <p style="background-color: red">Pasaje de posición de interruptor a Abierto</p>
+        <p style="background-color: skyblue; color:black">Pasaje de posición de interruptor a Cerrado</p>
+        <p style="background-color: yellow; color:black">Pasaje de algún disparo de protección a ON</p>
+        <p style="background-color: orange; color:black">Pasaje de orden de recierre a ON</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- <div class="container mt-5">
+    <form method="POST" action={{ url_for('events') }}>
+      {{ form.csrf_token }}
+      {{ form.stations.label }} {{ form.stations(size=30) }}
+      {{ form.start_date.label }} {{ form.start_date(size=30) }}
+      {{ form.end_date.label }} {{ form.end_date(size=30) }}
+      <input type="submit" value="Go">
+    </form>
+  </div> -->
+
+{% endblock %}

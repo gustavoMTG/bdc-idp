@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block content%}
+
+
+
+<div class="container-fluid">
+
+  <div class="row">
+  {% for signal in signals: %}
+    <div class="col-xl-3 col-md-4 col-sm-6">
+
+      <div class="card mt-2 mr-5" style="width: 18rem;">
+        <div class="card-body">
+          <h5 class="card-title"><i class="bi bi-exclamation-triangle" style="color: {{ signal[2] }}"></i> {{ signal[0].split(' | ')[0] }}</h5>
+          <h6 class="card-subtitle mb-2 text-body-secondary">{{ signal[0].split(' | ')[-1] }}</h6>
+          <p class="card-text">{{ " | ".join(signal[0].split(' | ')[1:-1]) }}</p>
+          <p class="card-text">Último valor en la DB PI:<br/> {{ signal[3] }}</p>
+        </div>
+      </div>
+
+    </div>
+  {% endfor %}
+  </div>
+
+
+</div>
+
+
+
+{% endblock %}
