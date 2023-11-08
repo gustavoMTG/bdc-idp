@@ -1,0 +1,37 @@
+ * Serving Flask app 'server'
+ * Debug mode: on
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.19.168:5000
+Press CTRL+C to quit
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 295-702-231
+C:\Python37\lib\site-packages\flask_bootstrap\templates\bootstrap\form.html:14: UserWarning: For Bootstrap 4, please import macros from "bootstrap4/" path (e.g. "from 'bootstrap4/form.html' import render_form"), the "bootstrap/" path is deprecated and will be removed in version 3.0.
+192.168.19.167 - - [30/Oct/2023 10:01:39] "GET /events HTTP/1.1" 200 -
+192.168.19.167 - - [30/Oct/2023 10:01:39] "GET /static/scripts/index.js HTTP/1.1" 200 -
+192.168.19.167 - - [30/Oct/2023 10:01:39] "GET /favicon.ico HTTP/1.1" 404 -
+192.168.19.167 - - [31/Oct/2023 10:49:26] "GET /events HTTP/1.1" 200 -
+192.168.19.167 - - [31/Oct/2023 10:49:26] "GET /static/scripts/index.js HTTP/1.1" 200 -
+192.168.19.167 - - [31/Oct/2023 10:50:35] "POST /events HTTP/1.1" 200 -
+192.168.19.23 - - [01/Nov/2023 14:56:55] "GET /events HTTP/1.1" 200 -
+192.168.19.23 - - [01/Nov/2023 14:56:55] "GET /static/scripts/index.js HTTP/1.1" 200 -
+192.168.19.120 - - [01/Nov/2023 15:31:52] "GET / HTTP/1.1" 200 -
+192.168.19.120 - - [01/Nov/2023 15:31:52] "GET /static/scripts/index.js HTTP/1.1" 200 -
+192.168.19.120 - - [01/Nov/2023 15:31:52] "GET /favicon.ico HTTP/1.1" 404 -
+192.168.19.168 - - [06/Nov/2023 10:19:02] "GET / HTTP/1.1" 200 -
+192.168.19.168 - - [06/Nov/2023 10:19:03] "GET /static/scripts/index.js HTTP/1.1" 200 -
+192.168.19.168 - - [06/Nov/2023 10:19:03] "GET /favicon.ico HTTP/1.1" 404 -
+192.168.19.168 - - [06/Nov/2023 10:19:04] "GET /events HTTP/1.1" 200 -
+192.168.19.168 - - [06/Nov/2023 10:19:04] "GET /static/scripts/index.js HTTP/1.1" 304 -
+192.168.19.168 - - [06/Nov/2023 10:19:46] "POST /events HTTP/1.1" 200 -
+192.168.19.168 - - [06/Nov/2023 10:41:41] "GET / HTTP/1.1" 200 -
+192.168.19.168 - - [06/Nov/2023 10:41:41] "GET /static/scripts/index.js HTTP/1.1" 304 -
+192.168.19.168 - - [06/Nov/2023 10:44:21] "GET /alarms/7785 HTTP/1.1" 200 -
+192.168.19.168 - - [06/Nov/2023 10:44:21] "GET /alarms/static/scripts/index.js HTTP/1.1" 404 -
+192.168.19.168 - - [06/Nov/2023 10:44:42] "GET /alarms/7785 HTTP/1.1" 200 -
+192.168.19.168 - - [06/Nov/2023 10:44:42] "GET /alarms/static/scripts/index.js HTTP/1.1" 404 -
+192.168.19.168 - - [06/Nov/2023 10:48:28] "GET / HTTP/1.1" 200 -
+192.168.19.168 - - [06/Nov/2023 10:48:28] "GET /static/scripts/index.js HTTP/1.1" 304 -
+^C

@@ -1,73 +1,21 @@
-"""
-Required to set API_ENDPOINT with url as environment variable.
-This library is intended to make requests to PIWebAPI easier.
-
-Talking about signals is the same as a list of PIPoint objects.
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////// OVERVIEW //////////////////////////////////////////////////////////
-
-The core component of this library is the PIPoint class. This class will store data as attributes for each signal and
-also has methods to request data for each signal. Inside It there are two methods, get_recorded_data to request a list
-of points, each with value, name and timestamp, and get_end_value which doesn't require arguments since it will only
-retrieve as the name implies, the last value.
-
-get_converted_alarms returns a list of PIPoint signals that match the name_filter argument, name_filter takes string
-arguments the same way we query PIVision e.g. CAZ_RODUR*.VALOR.
-
-Once we have a list of PIPoint signals, we can ask for it's data by two approaches:
-- We can loop the list and use get_recorded_data or get_end_value to get the data. Both methods return None, the
-retrieved data is stored in the data attribute of each signal.
-- Second approach is to use the batch controller, but it requires to first segment the signals with
-batch_signals_segmentation().
-Batch controller can make multiple requests at once, minimizing the amount of requests sent to the server.
-
-generate table takes a list of signals and will return a styled pandas dataframe with the signals we are interested
-highlighted.
-"""
-
 import requests
 import urllib3
 from datetime import datetime, timedelta
 import pandas as pd
-import os
-import math
+import asyncio
+import aiohttp
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-# Set the API endpoint as environment variables or replace these two lines with the routes as strings
+# Not best practice to hard code endpoint ¯\_(ツ)_/¯
 API_ENDPOINT = "https://172.22.10.218/PIWebApi/dataservers/s07dsUdtehyU67YDNfE1e0JQUElTRVJWRVI/points"
-BATCH_ENDPOINT = "https://172.22.10.218/PIWebApi/batch/"
-
-
-def batch_signals_segmentation(signals: list, max_batch=999) -> list:
-    """
-    Since PIWebAPI batch controller is limited to 999 elements, this method segments the list of signals to query into
-    lists of a maximum length of 999 elements each.
-    :param signals:
-    :return:
-    """
-    length = len(signals)
-    if length > max_batch:
-        required_divisons = math.ceil(length / max_batch)
-        segmented_signals = []
-        for division in range(1, required_divisons + 1):
-            index_start = max_batch * (division - 1)
-            index_end = max_batch * division
-            if division != required_divisons:
-                segmented_signals.append(signals[index_start:index_end])
-            else:
-                segmented_signals.append(signals[index_start:])
-        return segmented_signals
-    else:
-        return [signals]
 
 
 def pi_sync_get_alarms_list(name_filter, max_count=3000):
-    """
-    API request from PI database, returns a list of alarms that matches with the nameFilter.
+    '''
+    API request from PI database, returns a list of alarms that matchs with the nameFilter. 
     Each point of the list as a JSON.
-    """
+    '''
 
     parameters = {
         "nameFilter": name_filter,
@@ -87,23 +35,16 @@ def pi_sync_get_alarms_list(name_filter, max_count=3000):
 
 
 def format_timestamp(timestamp):
-    """Internal function"""
+    '''Internal function'''
     # Remove the "Z" at the end and one decimal digit because timestamp only handles microseconds (6 decimals)
-    if "." in timestamp:
-        after_comma_length = len(timestamp.split(".")[1])
-        if after_comma_length > 3:
-            timestamp = timestamp[:-2]
-        else:
-            timestamp = timestamp[:-1]
-    else:
-        timestamp = timestamp[:-1] + ".0"
+    timestamp = timestamp[:-2]
     timestamp = datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S.%f")
     local_date_time = timestamp - timedelta(hours=3)
     return local_date_time
 
 
 def find_voltage(pi_query):
-    """Internal function"""
+    '''Internal function'''
     try:
         kv_index = pi_query["Descriptor"].split(" ")
         kv_index = kv_index.index("kV")
@@ -113,7 +54,7 @@ def find_voltage(pi_query):
 
 
 def find_equipment_type(pi_query):
-    """Internal function"""
+    '''Internal function'''
     try:
         descriptor = pi_query["Descriptor"].split("|")[1]
     except IndexError:
@@ -133,12 +74,13 @@ def find_equipment_type(pi_query):
             if value in descriptor.lower():
                 found = True
                 return equipment
+                break
     if not found:
         return "Not defined"
 
 
 def get_converted_alarms(name_filter, max_count=3000, exclude_borr=True):
-    """This function returns a list of alarms already converted to PI_point objects"""
+    '''This function returns a list of alarms already converted to PI_point objects'''
     alarms = pi_sync_get_alarms_list(name_filter=name_filter, max_count=max_count)
     alarms = [PIPoint(alarm) for alarm in alarms]
     if exclude_borr:
@@ -146,7 +88,7 @@ def get_converted_alarms(name_filter, max_count=3000, exclude_borr=True):
     return alarms
 
 
-def generate_table(signals: list, start_time="*-3d", end_time="*-0d", style=True, batch=False, max_batch=999):
+def generate_table(signals: list, start_time="*-3d", end_time="*-0d", style=True):
     """
     Generates a dataframe ordered by timestamps and colors it according to triggers, reclosure commands and breakers positions.
     :param signals: A list of the signals that will be taken into account.
@@ -196,17 +138,11 @@ def generate_table(signals: list, start_time="*-3d", end_time="*-0d", style=True
     signals = [signal for signal in signals if signal.point_type.lower() == "digital"]
 
     # This portion of the code could improve with async requests
-    # This if statement keeps backward compatibility with the previous request method get_recorded
-    if batch:
-        segmented_signals = batch_signals_segmentation(signals, max_batch)
-        for signals_ in segmented_signals:
-            print(f"Batch segmentation: {len(signals_)}")
-            batch_request(signals_, start_time, end_time)
-    else:
-        for signal in signals:
-            signal.get_recorded_data(start_time, end_time)
     dfs_list = [df_treatment(
-        dataframe=pd.DataFrame(signal.data),
+        dataframe=signal.get_recorded_data(
+            start_time=start_time,
+            end_time=end_time,
+            dataframe=True),
         station=signal.station,
         descriptor=signal.descriptor,
         source=signal.source) for signal in signals]
@@ -235,78 +171,11 @@ def generate_table(signals: list, start_time="*-3d", end_time="*-0d", style=True
         return styled_df
 
 
-def batch_request(signals, start_time="*-3d", end_time="*-0d", end_value=False, max_count=3000):
-    """
-    This method handles the PI Web API batch controller. By passing a signals list of PIPoint objects
-    it will perform the requests in a single large request and store it in the data attribute of each signal.
-    :param end_value:
-    :param signals: List of signals with PIPoint objects
-    :param start_time: Date like string e.g. 12/09/2023
-    :param end_time: As start_time
-    :param max_count: Maximum number of data to be returned by each signal
-    :return: Nothing
-    """
-    headers = {
-        "Content-Type": "application/json",
-        "X-Requested-With": "application/json"
-    }
-    raw_body = {}
-    for signal in signals:
-        if end_value:
-            raw_body[signal.path] = {
-                "Method": "GET",
-                "Resource": signal.end_value
-            }
-        else:
-            raw_body[signal.path] = {
-                "Method": "GET",
-                "Resource": signal.recorded_data
-                            + "?" + f"startTime={start_time}"
-                            + "&" + f"endTime={end_time}"
-                            + "&" + f"maxCount={max_count}",
-                "Content": f"{{'startTime': '{start_time}', 'endTime': '{end_time}', 'maxCount': '{max_count}'}}"
-            }
-
-    try:
-        response = requests.post(url=BATCH_ENDPOINT, headers=headers, json=raw_body,
-                                 verify=False)
-        response.raise_for_status()
-    except requests.exceptions.RequestException as error:
-        print(f"Error occurred: {error}")
-    else:
-        datas = response.json()
-        for signal in signals:
-            # For HTTP status code in 200 range, the data is valid
-            if 200 <= datas[signal.path]["Status"] <= 299:
-                # print(datas[signal.path])
-                if end_value:
-                    signal.data = datas[signal.path]["Content"]
-                else:
-                    signal.data = datas[signal.path]["Content"]["Items"]
-                try:
-                    # Discard unnecessary data
-                    if end_value:
-                        signal.data = {
-                            "Timestamp": format_timestamp(signal.data["Timestamp"]),
-                            "Value": signal.data["Value"]["Value"],
-                            "Name": signal.data["Value"]["Name"]
-                        }
-                    else:
-                        signal.data = [{"Timestamp": format_timestamp(data["Timestamp"]),
-                                        "Value": data["Value"]["Value"],
-                                        "Name": data["Value"]["Name"]}
-                                       for data in signal.data]
-                except TypeError:
-                    pass
-            else:
-                signal.data = []
-
-
 class PIPoint:
-    """
-    This class provides methods and attributes that make easier to handle signals from the DB.
+    '''
+    This class provides methods and attributes that make easier to handle signals from the DB. 
     Mainly focused on digital signals but still handles floats.
-    """
+    '''
 
     def __init__(self, pi_query):
         self.name = pi_query["Name"]
@@ -315,6 +184,7 @@ class PIPoint:
         self.source = pi_query["Path"].split("_")[0][-3:].lower()
         self.point_class = pi_query["PointClass"]
         self.point_type = pi_query["PointType"]
+        self.is_cb_position = True if "estado del interruptor" in pi_query["Descriptor"].lower() else False
         self.reduced_descriptor = " | ".join(pi_query["Descriptor"].split(" | ")[1:-1])
         self.first_descriptor = pi_query["Descriptor"].split(" | ")[0]
         self.station = pi_query["Descriptor"].split(" | ")[-1]
@@ -326,8 +196,8 @@ class PIPoint:
         self.data = None
 
     def get_endvalue(self):
-        """Returns the last point the DB has, NOT the last shift.
-        Returned data has Timestamp, Value and Name."""
+        '''Returns the last point the DB has, NOT the last shift.
+        Returned data has Timestamp, Value and Name.'''
         try:
             response = requests.get(url=self.end_value, verify=False)
             response.raise_for_status()
@@ -351,12 +221,12 @@ class PIPoint:
                     "Name": data["Value"]["Name"]
                 }
         finally:
-            self.data = data
+            return data
 
     def get_recorded_data(self, start_time="*-3d", end_time="*-0d", max_count=1000, dataframe=False):
-        """
+        '''
         Returns the recorded data for a given amount of days back.
-
+        
         :param dataframe: If true the data is returned as a pandas dataframe, if false as a list of dictionaries.
         :param max_count: Maximum amount of points that can be returned.
         :param days_back_start: Amount of days back to start requesting data.
@@ -371,7 +241,7 @@ class PIPoint:
             "Today" (Today at 00:00)
             "T-3d"
             "Yesterday + 03:45:30.25"
-        """
+        '''
 
         parameters = {
             "startTime": start_time,
@@ -383,29 +253,18 @@ class PIPoint:
             response.raise_for_status()
         except requests.exceptions.RequestException as error:
             print(f"Error ocurred: {error}")
-            formatted_data = []
+            formated_data = []
         else:
             data = response.json()
             data = data["Items"]
-            formatted_data = []
+            formated_data = []
             for item in data:
                 formatted_timestamp = format_timestamp(timestamp=item["Timestamp"])
                 if "float" in self.point_type.lower():
-                    # In this case the signal is a measurement of analog magnitudes such as current or voltage
+                    # In this case the signal is a measurment of analog magnitudes such as current or voltage
                     new_item = {
                         "Timestamp": formatted_timestamp,
                         "Value": item["Value"]
-                    }
-                elif "string" in self.point_type.lower():
-                    new_field = item["Value"].split(" | ")
-                    new_item = {
-                        "Timestamp": formatted_timestamp,
-                        "Index": new_field[5],
-                        "Station": new_field[0],
-                        "Descriptor": new_field[1],
-                        "Variable": new_field[2],
-                        "Value": new_field[3],
-                        "Path": new_field[4],
                     }
                 else:
                     # It's a digital signal like an alarm
@@ -414,8 +273,8 @@ class PIPoint:
                         "Value": item["Value"]["Value"],
                         "Name": item["Value"]["Name"]
                     }
-                formatted_data.append(new_item)
+                formated_data.append(new_item)
         finally:
             if dataframe:
-                formatted_data = pd.DataFrame(formatted_data)
-            self.data = formatted_data
+                formated_data = pd.DataFrame(formated_data)
+            return formated_data

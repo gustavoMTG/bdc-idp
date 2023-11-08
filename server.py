@@ -8,18 +8,38 @@ from pipylib import get_converted_alarms, generate_table, batch_request, batch_s
 # from flask_sqlalchemy import SQLAlchemy
 import psycopg2 as pg2
 from psycopg2 import extras
+import os
 
+# Get the directory of the current script
+script_dir = os.path.dirname(os.path.realpath(__file__))
+
+# Change the working directory to the script's directory
+os.chdir(script_dir)
 
 # Initialize web app
 app = Flask(__name__)
 app.secret_key = "dev"
-# Configure connection to Postgres data base
-app.config["SQLALCHEMY_DATABASE_URI"] = 'postgresql://postgres:1996@localhost/idp'
+# Configure connection to Postgres data base in case of using SQL Alchemy
+# app.config["SQLALCHEMY_DATABASE_URI"] = 'postgresql://postgres:1996@localhost/idp'
 
 
 # Initialize styling with bootstrap
-# This line of code replace adding the bootstrap CDN to HTML
+# This line of code replaces adding the bootstrap CDN to HTML
 bootstrap = Bootstrap5(app)
+
+
+# Define Database queries function
+def query_db(stmnt: str):
+    """
+    This function makes SQL queries easier from POSTGRE
+    :param stmnt: This is the SQL statement.
+    :return: Queried data
+    """
+    with pg2.connect(database="idp", user="postgres", password="1996") as conn:
+        with conn.cursor(cursor_factory=extras.NamedTupleCursor) as cursor:
+            cursor.execute(stmnt)
+            query = cursor.fetchall()
+    return query
 
 
 # Each form is defined as a class that inherits from class FlaskForm
@@ -28,22 +48,6 @@ class EventForm(FlaskForm):
     start_date = DateField("Fecha de inicio", validators=[DataRequired()])
     end_date = DateField("Fecha de fin", validators=[DataRequired()])
     submit = SubmitField()
-
-
-# class LogForm(FlaskForm):
-#     brief = StringField("Resumen", validators=[DataRequired()])
-#     text_area = TextAreaField("Descripción", render_kw={"rows": 15})
-#     radio = RadioField("select radio", choices=["option1", "option2", "option3"])
-#     check_boxes = BooleanField("RET670")
-#     select_multiple = SelectMultipleField(
-#         "Select option",
-#         choices=[("option1", "abb"), ("option2", "sel"), ("option3", "siemens")],
-#         coerce=str
-#     )
-#     date = DateField("Fecha")
-#     start_time = TimeField("Hora de inicio")
-#     end_time = TimeField("Hora de fin")
-#     submit = SubmitField("Enviar")
 
 
 # Landing page, if methods argument is not specified each page only supports GET requests
@@ -136,32 +140,25 @@ def events():
 @app.route("/logs")
 def logs():
     # POSTGRE query
-    with pg2.connect(database="idp", user="postgres", password="1996") as conn:
-        with conn.cursor(cursor_factory=extras.NamedTupleCursor) as cursor:
-            cursor.execute(
-                "SELECT * FROM web_log_form "
-                "LIMIT 6"
-            )
-            events = cursor.fetchall()
-            ids = [event.idevento for event in events]
-            cursor.execute(
-                "SELECT * FROM participants_cards "
-                f"WHERE idevento IN {tuple(ids)}"
-            )
-            participations = cursor.fetchall()
+    events = query_db(
+        "SELECT * FROM web_log_form "
+        "LIMIT 6"
+    )
+    ids = [event.idevento for event in events]
+    participations = query_db(
+        "SELECT * FROM participants_cards "
+        f"WHERE idevento IN {tuple(ids)}"
+    )
 
     return render_template("logs.html", events=events, participations=participations)
 
 
 @app.route("/participant_form/<id>")
 def participant_form(id):
-    with pg2.connect(database="idp", user="postgres", password="1996") as conn:
-        with conn.cursor(cursor_factory=extras.NamedTupleCursor) as cursor:
-            cursor.execute(
-                "SELECT * FROM marca "
-                "WHERE marca.enabled = true"
-            )
-            marcas = cursor.fetchall()
+    marcas = query_db(
+        "SELECT * FROM marca "
+        "WHERE marca.enabled = true"
+    )
     marcas = [marca.nombre + " " + marca.modelo for marca in marcas]
 
     class LogForm(FlaskForm):
@@ -184,12 +181,7 @@ def participant_form(id):
 
 @app.route("/display_entry/<id>")
 def display_entry(id):
-    with pg2.connect(database="idp", user="postgres", password="1996") as conn:
-        with conn.cursor(cursor_factory=extras.NamedTupleCursor) as cursor:
-            cursor.execute(
-                "SELECT * FROM participante "
-            )
-            events = cursor.fetchall()
+    events = query_db("SELECT * FROM participante ")
     return render_template("display_form.html", events=events)
 
 

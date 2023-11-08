@@ -1,0 +1,106 @@
+RESUMEN GENERAL:
+La aplicación se basa en Flask para estructurar la aplicación, Jinja para combinar Python con HTML, psycopg2 para comunicarse con la base de datos Postgre, WTForms
+y flask_wtf para facilitar la construcción de formularios, Bootstrap junto con Bootstrap Flask para construir rápidamente la página HTML y darle estilo sin entrar 
+en detalle con CSS y JavaScript.
+Por último pipylib para comunicarse con la base de datos PI. 
+Como Pyhton solo funciona del lado del servidor, las páginas web son estáticas, si se quiere agregar cierta interacción del lado del cliente, habría que implementar
+algunos scripts en JavaScript (esto es solo una idea).
+
+DESCRIPCIÓN:
+
+//////////////////////////////////////////////////////////
+- ESTRUCTURA DE LA APLICACIÓN:
+//////////////////////////////////////////////////////////
+El archivo principal es server.py, en este se inicializa la app y se definen las rutas que va a tener la página.
+
+Las rutas de la página se definen con el decorador @app.route() y se las asocia a una función en la línea inmediatamente debajo de estos que definirá
+lo que esta ruta haga, por ejemplo cargar una página HTML con la función render_template() en la línea return. 
+El primer argumento del decorador es una cadena de caracteres que definen el nombre de la ruta.
+En general la página de inicio se define como "/" pero podría ser cualquier cosa que se acepte como parte de una URL.
+Dentro de esta ruta se pueden usar caracteres especiales para tomar variables pasadas dentro de la URL, utilizando por ejemplo 
+"ruta/<nombre_variable>" se puede pasar la variable dentro de la función asociaciada al decorador, eso si, es necesario definir la variable dentro de los 
+parámetros de la función con el mismo nombre.
+Este decorador también acepta el parámetro methods, se le puede dar una lista con los verbs HTTP aceptados ("GET", "POST", "PULL", etc), en caso de no 
+especificarse, la ruta acepta solo GET.
+
+Como flask es un framework y no una biblioteca, este impone ciertas reglas al momento de ordenar nuestros archivos en el proyecto. Es necesario definir dos carpetas,
+templates y static. La primera para nuestros archivos HTML donde funciones como render_template van a buscar los archivos, mientras que static es para archivos que 
+no van a cambiar como css, javascript, imágenes, etc.
+
+//////////////////////////////////////////////////////////
+- IDEAS GENERALES PARA HTML Y CSS
+//////////////////////////////////////////////////////////
+Hablando en general de desarrollo web, los archivos que se ocupan de generar una página web son HTML, CSS y JavaScript. La idea es que cada uno se ocupe de distintos
+aspectos, HTML para elementos, CSS para estilo y orden, y JavaScript (en caso de implementar algo) para interactividad.
+Bootstrap es una biblioteca creada originalmente por el equipo de twitter para generar rapidamente páginas web con estructura, estilo y que respondan al usuario.
+Como se utiliza Bootstrap, no es necesario manejar HTML y CSS en detalle, pero vale la pena tener ciertas nociones, Bootstrap también incluye JavaScript para animaciones
+y demás. Primero para incluir bootstrap hay dos formas principales, por CDN (content delivery network) o por medio de una función incluida en la biblioteca Bootstrap Flask
+que implementa bootstrap.load_css() para hacer exactamente lo mismo, incluir el CDN. Esto se debe hacer en el header del archivo HTML para que las clases e ids estén 
+definidas antes de que se carguen los elementos. Hasta este punto hemos cargado el css de bootstrap, nos falta incluie el JavaScript. De nuevo podemos hacerlo por CDN o la
+función bootstrap.load_js(), esto lo tenemos que hacer al final del body de nuestro código HTML para que cuando los script de JS busquen los elementos, estos ya estén 
+cargados en nuestra página. Falta responder la última pregunta, como incluir HTML ?. La respuesta es que o bien, nosotros mismos lo escribimos o podemos hacer uso de los 
+elementos ya creados en la página de Bootstrap, dejo el enlace en las referencias.
+HTML al igual que XML, las dos últimas letras significan "Markup Language", lo que significa que dividen los elementos con marcadores, los principales que vamos a 
+necesitar son:
+
+<h1></h1>
+<h6></h6>
+<a></a>
+<div></div>
+<br>
+<button></button>
+<p></p>
+
+Algunos tienen inicio y fin como h1, otros como br no lo tienen ya que este es un break para saltar de línea, h1 es un header que dentro del tag va el contenido, por 
+ejemplo <h1>Hello Wolrd!</h1>.
+Lo otro importante son los parámetros que se pasan, estos parámetros sirven para darles propiedades a los elementos. Los principales son class e id, class es una forma 
+de que nuestro elemento adquiera propiedades de estilo de un archivo .css mientras que id también lo hace pero de forma única y en general se lo utiliza como 
+identificador para programas escritos en JavaScript.
+
+referencia:
+https://developer.mozilla.org/es/docs/Web/HTML (En References se mencionan todos los elementos disponibles con descripciones y ejemplos)
+https://getbootstrap.com/docs/5.3/getting-started/introduction/
+
+//////////////////////////////////////////////////////////
+- PYTHON EN HTML (dentro de los .html):
+//////////////////////////////////////////////////////////
+Python usa el motor de Jinja para insertar HTML y trabajar dentro de archivos HTML. Si bien la sintaxis es practicamente igual que Python, tienen sus diferencias 
+y es recomendable ver la documentación por cualquier duda, pero en el 90% de los casos solo necesitaremos loops for y condicionales if.
+Las instrucciones de una sola línea como pueden ser acceder a un elemento dentro de una lista se especifican dentro de doble paréntesis curvo {{ nombre_lista[0] }},
+mientras que las instrucciones multilíneas como un for o if se especifican con {% instrucción %}. En el caso de for e if serían:
+
+{% for _ in variable lista: %}
+	instrucción o código HTML 1
+	instrucción o código HTML 2
+	...
+{% endfor %}
+
+o
+
+{% if condición:%}
+	instrucción o código HTML 1
+	instrucción o código HTML 2
+	...
+{% endif %}
+
+Con los dos ejemplos anteriores se puede ver que si bien es muy similar a Python, la sintaxis cambia un poco. Dentro de estos bloques, si se trata de código HTML,
+no es necesario envolver dentro de {{}}, solo para Python.
+
+El código en Jinja nunca llega al cliente ya que antes de enviarlo, la aplicación del lado del servidor se encarga de reemplazarlo por código HTML.
+
+referencia:
+https://jinja.palletsprojects.com/en/3.1.x/templates/#html-escaping (Flask configura por defecto un ambiente Jinja, por lo que se puede usar directo en HTML)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
